@@ -11,3 +11,9 @@ wheels/
 
 .env
 data
+
+yeat_raw_html_progress.pkl
+yeat_lyrics_clean.txt
+yeat-gpt-final
+yeat-gpt-model
+yeat-gpt-v1
