@@ -21,8 +21,9 @@ YeatGPT is a fine-tuned **GPT-2** model designed to mimic the unique linguistic 
 * **Infrastructure**: Local GPU training (Ampere architecture)
 
 
-  ## Current Status
+## Current Status
 
-  Currently, V1 is **FUNCTIONAL**
+Currently, V1 is **FUNCTIONAL**
 
-  YeatGPT is working! It is subpar at best, but I have succesfully trained the model :)
+YeatGPT is working! It is subpar at best, but I have succesfully trained the model :)
+
