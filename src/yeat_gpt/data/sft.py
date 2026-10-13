@@ -6,9 +6,11 @@ import json
 import random
 from pathlib import Path
 
+from yeat_gpt.clean.voice import SEED_ADLIBS, SEED_SLANG, apply_voice_spelling
 from yeat_gpt.config import (
     BREAK_PREFIX,
     CATALOG_PATH,
+    DICTIONARY_PATH,
     GENERAL_PATH,
     GENERAL_SYSTEM,
     REWRITE_BATCH_PATH,
@@ -24,11 +26,15 @@ GREETING_USERS = (
     "hey what's good",
     "how are you doing",
     "you up right now",
+    "you good twin",
+    "what's the move",
 )
 GREETING_LEADS = (
-    "I am good. Just been moving through the day.",
-    "Yeah I am here. Tell me what you need.",
-    "I am straight. Been quiet and locked in.",
+    "I am good. Just locked in on my lyfë right now.",
+    "Yeah I am here. Moving quiet and staying tun.",
+    "I am straight. Twizzy mode, nothing loud.",
+    "Yeah I been up. Tonka night but I am calm.",
+    "I am good. Just in my own lane, you feel me.",
 )
 OPINION_USERS = (
     "what do you think about {topic}",
@@ -36,21 +42,44 @@ OPINION_USERS = (
     "you into {topic} or what",
 )
 OPINION_LEADS = (
-    "I like {topic}. It sits right with me.",
-    "Yeah I mess with {topic} when it feels honest.",
-    "I keep {topic} simple and I mean that.",
+    "I like {topic}. It hits when I stay in my lyfë.",
+    "Yeah I mess with {topic} when it feel real.",
+    "I keep {topic} simple. No fake noise around it.",
+    "I fuck with {topic} if it keep me tun and focused.",
 )
 EXPLAIN_USERS = (
     "what did you mean by that",
     "explain that in normal words",
     "say it so I can follow",
+    "break that down real quick",
 )
 EXPLAIN_LEADS = (
     "I meant that I stay on my own path and I do not chase the noise.",
     "Yeah I was saying the night moves fast and I move with it.",
-    "I was talking about finishing what I started.",
+    "I was talking about finishing what I started, no switch up.",
+    "I meant keep it twizzy and do not let the room slow you down.",
 )
-TOPICS = ("night drives", "the city", "working late", "new music", "quiet rooms")
+SLANG_USERS = (
+    "what does twizzy mean to you",
+    "talk tonka to me",
+    "what is the lyfestyle",
+    "say something in your slang",
+)
+SLANG_LEADS = (
+    "I keep twizzy close. That just mean my people and my lane.",
+    "Yeah tonka is that big body energy when I feel tun.",
+    "I move lyfestylë quiet. Money low key, focus loud.",
+    "I stay geeked on the craft. Luh moments, real nights.",
+)
+TOPICS = (
+    "night drives",
+    "the city",
+    "working late",
+    "new music",
+    "quiet rooms",
+    "tonka trucks",
+    "late money",
+)
 MISSING_GENERAL = """Not writing data/processed/sft.jsonl because general instruct data is missing.
 Next: uv sync --extra general
 Then: uv run yeat-gpt fetch-general
@@ -59,6 +88,26 @@ Then: uv run yeat-gpt build"""
 
 def song_lines(song: dict) -> list[str]:
     return [line.strip() for line in str(song.get("text") or "").splitlines() if line.strip()]
+
+
+def _load_slang() -> list[str]:
+    if DICTIONARY_PATH.is_file():
+        try:
+            payload = json.loads(DICTIONARY_PATH.read_text(encoding="utf-8"))
+            words = [str(w) for w in payload.get("slang") or [] if str(w).strip()]
+            if words:
+                return words
+        except json.JSONDecodeError:
+            pass
+    return list(SEED_SLANG)
+
+
+def _slang_ok(word: str) -> bool:
+    """Keep sprinkle words that look like brand slang, not filler."""
+    low = word.casefold()
+    if low in {"cant", "i'm", "got", "all", "don't"}:
+        return False
+    return len(low) >= 3
 
 
 def _message(system: str, user: str, assistant: str, source: str, **extra) -> dict:
@@ -74,27 +123,49 @@ def _message(system: str, user: str, assistant: str, source: str, **extra) -> di
     return row
 
 
-def _one_template(song: dict, rng: random.Random, system: str) -> dict | None:
+def _voice_lead(text: str, rng: random.Random) -> str:
+    """Apply spelling cap and optionally tack a light ad-lib clause."""
+    styled = apply_voice_spelling(text, max_stylized=2)
+    if rng.random() < 0.22:
+        adlib = rng.choice(SEED_ADLIBS)
+        if adlib.casefold() not in styled.casefold():
+            styled = f"{styled} {adlib.capitalize()}."
+            styled = apply_voice_spelling(styled, max_stylized=2)
+    return styled
+
+
+def _one_template(song: dict, rng: random.Random, system: str, slang: list[str]) -> dict | None:
     lines = song_lines(song)
     if not lines:
         return None
-    variant = rng.choice(("greeting", "opinion", "explain"))
+    variant = rng.choice(("greeting", "opinion", "explain", "slang"))
     topic = rng.choice(TOPICS)
     if variant == "greeting":
         user = rng.choice(GREETING_USERS)
         lead = rng.choice(GREETING_LEADS)
-        include_bar = rng.random() < 0.55
+        include_bar = False
     elif variant == "opinion":
         user = rng.choice(OPINION_USERS).format(topic=topic)
         lead = rng.choice(OPINION_LEADS).format(topic=topic)
-        include_bar = rng.random() < 0.55
+        include_bar = False
+    elif variant == "slang":
+        user = rng.choice(SLANG_USERS)
+        lead = rng.choice(SLANG_LEADS)
+        # Optional second clause using core slang only (not random lyric junk).
+        core = [w for w in slang[:24] if _slang_ok(w)]
+        if rng.random() < 0.25 and core:
+            word = rng.choice(core)
+            lead = f"{lead} Stay on that {word}."
+        include_bar = False
     else:
         user = rng.choice(EXPLAIN_USERS)
         lead = rng.choice(EXPLAIN_LEADS)
-        include_bar = rng.random() < 0.15
-    assistant = lead
-    if include_bar:
-        assistant = f"{lead}\n{rng.choice(lines)}"
+        include_bar = False
+
+    assistant = _voice_lead(lead, rng)
+    # Rare optional lyric echo on non-bar prompts — keep tiny so chat stays chat.
+    if include_bar and rng.random() < 0.05:
+        assistant = f"{assistant}\n{rng.choice(lines)}"
     if assistant.strip() in set(lines):
         return None
     return _message(system, user, assistant, "template", variant=variant)
@@ -109,11 +180,12 @@ def build_template_rows(
 ) -> list[dict]:
     if limit <= 0 or not songs:
         return []
+    slang = _load_slang()
     rows: list[dict] = []
     attempts = 0
     while len(rows) < limit and attempts < limit * 30:
         attempts += 1
-        row = _one_template(rng.choice(songs), rng, system)
+        row = _one_template(rng.choice(songs), rng, system, slang)
         if row:
             rows.append(row)
     return rows
@@ -162,6 +234,7 @@ def rows_from_rewrites(rewrites: list[dict], batch_rows: list[dict], system: str
         ok, _reason = accept_rewrite(assistant, bars)
         if not ok:
             continue
+        assistant = apply_voice_spelling(assistant, max_stylized=2)
         out.append(_message(system, str(source.get("user") or ""), assistant, "rewrite"))
     return out
 
@@ -235,6 +308,11 @@ def assess_rows(rows: list[dict], corpus_lines: list[str] | None = None) -> list
         share = continuations / len(yeat)
         if share > 0.35:
             problems.append(f"continuation share of yeat rows is {share:.3f}, above 0.35")
+        # Target ~15% bars; warn if the mix drifts far.
+        if not (0.05 <= share <= 0.25):
+            problems.append(
+                f"continuation share of yeat rows is {share:.3f}, expected about 0.15"
+            )
     if corpus_lines is not None:
         corpus = {line.strip() for line in corpus_lines if line.strip()}
         pool = [row for row in rows if row.get("source") in {"template", "rewrite"}]

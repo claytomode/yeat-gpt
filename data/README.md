@@ -1,13 +1,33 @@
 # Data drop folder
 
-`yeat-gpt import PATH` accepts:
+## Primary path (LRCLIB)
 
-- A v1 pickle named like `yeat_raw_html_progress.pkl`. It was saved from a notebook as a `Song` dataclass (`title`, `url`, `id`) plus `html`. The importer remaps that class and writes `data/raw/html/{id}.html`.
-- A directory of Genius HTML files.
-- A text file split on `<|endoftext|>`.
-- JSON or JSONL objects with `title` and `text` or `lyrics`.
-- A zip of any of the above.
+```text
+uv run yeat-gpt scrape    # writes data/raw/lrclib/{id}.json
+uv run yeat-gpt clean     # catalog + dictionary + scope.json
+uv run yeat-gpt fetch-general
+uv run yeat-gpt build     # data/processed/sft.jsonl
+uv run yeat-gpt check
+```
 
-That import is an older snapshot, not the full discography. `uv run yeat-gpt scrape` downloads songs whose Genius ids are not already in `data/raw/html` and does not delete imported files. `clean` then merges both into `data/processed/catalog.json`.
+Scope is fixed in code (`yeat_gpt.scrape.scope`):
 
-Do not commit raw HTML, the catalog, `sft.jsonl`, or lyric text. Those paths are gitignored.
+- Official albums through **Dangerous Summer**
+- A short allowlist of popular real leaks
+- No remixes, live/paused cuts, features, or newer projects
+
+## Optional imports
+
+`yeat-gpt import PATH` still accepts older snapshots:
+
+- A v1 pickle named like `yeat_raw_html_progress.pkl`
+- A directory of Genius HTML files
+- A text file split on `<|endoftext|>`
+- JSON or JSONL objects with `title` and `text` or `lyrics`
+- A zip of any of the above
+
+`clean` prefers LRCLIB rows and dedupes by title against any HTML/text imports.
+
+## Do not commit
+
+Raw lyrics, the catalog, `sft.jsonl`, dictionaries mined from lyrics, and `.env` stay gitignored.

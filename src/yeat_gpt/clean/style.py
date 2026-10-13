@@ -7,6 +7,8 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from yeat_gpt.clean.voice import mine_dictionary
+
 GENERIC_STOP = frozenset(
     "i me my we you the a an and or but in on at to for of is it that this with from".split()
 )
@@ -14,8 +16,9 @@ GENERIC_STOP = frozenset(
 THEME_KEYWORDS: dict[str, list[str]] = {
     "vehicles": ["tonka", "bentley", "jeep", "truck", "car", "drive"],
     "drugs": ["perc", "xan", "x ", "lean", "perk", "drug", "pill"],
-    "money": ["money", "cash", "rich", "bank", "paid"],
-    "flex": ["diamond", "ice", "watch", "chain", "ring", "eli"],
+    "money": ["money", "cash", "rich", "bank", "paid", "rackz", "monëy"],
+    "flex": ["diamond", "ice", "watch", "chain", "ring", "eli", "twizzy"],
+    "lyfe": ["lyfe", "lyfë", "alive", "alivë", "geek", "rage", "ceo"],
 }
 
 
@@ -26,7 +29,7 @@ def has_diacritic(s: str) -> bool:
 def mine_style_lexicon(titles: list[str], lyric_tokens: Counter) -> dict:
     title_tokens: Counter = Counter()
     for title in titles:
-        for tok in re.findall(r"[a-zA-Z0-9ëüöï]+", title):
+        for tok in re.findall(r"[a-zA-Z0-9ëüöïä]+", title):
             if len(tok) > 2 and tok.lower() not in GENERIC_STOP:
                 title_tokens[tok] += 1
     stylized = [t for t, _ in title_tokens.most_common(80) if has_diacritic(t) or t.isupper()]
@@ -65,15 +68,27 @@ def mine_phrase_bank(songs: list[dict]) -> dict:
     return {"terms": {k: v for k, v in sorted(term_lines.items())}}
 
 
-def save_lexicons(songs: list[dict], out_style: Path, out_phrase: Path) -> None:
+def save_lexicons(
+    songs: list[dict],
+    out_style: Path,
+    out_phrase: Path,
+    out_dictionary: Path | None = None,
+) -> None:
     titles = [s["title"] for s in songs]
     token_counter: Counter = Counter()
     for song in songs:
-        for tok in re.findall(r"[a-zA-Z0-9ëüöï]{3,}", song.get("text", "").lower()):
+        for tok in re.findall(r"[a-zA-Z0-9ëüöïä]{3,}", song.get("text", "").lower()):
             if tok not in GENERIC_STOP:
                 token_counter[tok] += 1
     style = mine_style_lexicon(titles, token_counter)
     phrase = mine_phrase_bank(songs)
+    dictionary = mine_dictionary(songs)
+    style["dictionary_slang_preview"] = dictionary["slang"][:40]
+    style["spelling_rules"] = dictionary["spelling_rules"]
     out_style.parent.mkdir(parents=True, exist_ok=True)
     out_style.write_text(json.dumps(style, indent=2, ensure_ascii=False), encoding="utf-8")
     out_phrase.write_text(json.dumps(phrase, indent=2, ensure_ascii=False), encoding="utf-8")
+    if out_dictionary is not None:
+        out_dictionary.write_text(
+            json.dumps(dictionary, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
