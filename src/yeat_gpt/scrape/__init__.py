@@ -1,3 +1,3 @@
-from yeat_gpt.scrape.genius import run_scrape
+from yeat_gpt.scrape.lrclib import run_scrape
 
 __all__ = ["run_scrape"]

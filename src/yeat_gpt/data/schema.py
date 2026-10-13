@@ -17,6 +17,9 @@ class CatalogEntry:
     album: str | None = None
     text: str = ""
     line_count: int = 0
+    source: str = "genius"
+    scope_kind: str | None = None
+    lrclib_id: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

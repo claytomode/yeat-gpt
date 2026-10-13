@@ -35,24 +35,43 @@ def import_cmd(
 
 @app.command()
 def scrape(
-    album: str | None = typer.Option(None, help="Only download titles containing this text"),
+    album: str | None = typer.Option(
+        None, help="Unused for LRCLIB (kept for CLI compatibility)"
+    ),
+    source: str = typer.Option(
+        "lrclib",
+        help="Lyric source: lrclib (default) or genius (needs GENIUS token)",
+    ),
 ):
-    """Download Yeat songs that are not already in data/raw/html."""
-    from yeat_gpt.scrape.genius import run_scrape
-
+    """Download in-scope Yeat plain lyrics. Default source is LRCLIB (no token)."""
+    _ = album  # reserved for future album-key filtering
     try:
-        stats = run_scrape(album_filter=album)
+        if source == "lrclib":
+            from yeat_gpt.scrape.lrclib import run_scrape
+
+            stats = run_scrape()
+            typer.echo(
+                f"listed={stats['listed']} already_present={stats['already_present']} "
+                f"newly_downloaded={stats['newly_downloaded']} missed={stats.get('missed', 0)}"
+            )
+            return
+        if source == "genius":
+            from yeat_gpt.scrape.genius import run_scrape as run_genius
+
+            stats = run_genius(album_filter=album)
+            typer.echo(
+                f"listed={stats['listed']} already_present={stats['already_present']} "
+                f"newly_downloaded={stats['newly_downloaded']}"
+            )
+            return
     except RuntimeError as exc:
         _fail(str(exc))
-    typer.echo(
-        f"listed={stats['listed']} already_present={stats['already_present']} "
-        f"newly_downloaded={stats['newly_downloaded']}"
-    )
+    _fail("source must be lrclib or genius")
 
 
 @app.command()
 def clean():
-    """Parse HTML and text imports into data/processed/catalog.json."""
+    """Parse LRCLIB JSON (and optional HTML/text) into data/processed/catalog.json."""
     from yeat_gpt.clean.lyrics import run_clean
 
     try:
@@ -60,8 +79,11 @@ def clean():
     except RuntimeError as exc:
         _fail(str(exc))
     typer.echo(
-        f"songs_cleaned={stats['songs_cleaned']} from_html={stats['from_html']} "
-        f"from_text={stats['from_text']} skipped={stats['skipped']}"
+        f"songs_cleaned={stats['songs_cleaned']} "
+        f"from_lrclib={stats.get('from_lrclib', 0)} "
+        f"from_html={stats['from_html']} "
+        f"from_text={stats['from_text']} "
+        f"skipped={stats['skipped']}"
     )
 
 
