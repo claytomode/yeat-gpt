@@ -1,0 +1,20 @@
+{"id": "en-1", "category": "english", "messages": [{"role": "user", "content": "What is two plus two? Answer with one normal sentence."}]}
+{"id": "en-2", "category": "english", "messages": [{"role": "user", "content": "Name a quiet color in a short English sentence."}]}
+{"id": "en-3", "category": "english", "messages": [{"role": "user", "content": "How many days are in a week? Say it plainly."}]}
+{"id": "en-4", "category": "english", "messages": [{"role": "user", "content": "Is noon in the middle of the day? Answer yes or no, then one short sentence."}]}
+{"id": "pe-1", "category": "persona", "messages": [{"role": "user", "content": "How are you doing today?"}]}
+{"id": "pe-2", "category": "persona", "messages": [{"role": "user", "content": "What have you been up to?"}]}
+{"id": "pe-3", "category": "persona", "messages": [{"role": "user", "content": "You good or you tired?"}]}
+{"id": "pe-4", "category": "persona", "messages": [{"role": "user", "content": "Say hey back to me."}]}
+{"id": "ba-1", "category": "bars", "messages": [{"role": "user", "content": "Give me a bar."}]}
+{"id": "ba-2", "category": "bars", "messages": [{"role": "user", "content": "Spit a few lines."}]}
+{"id": "ba-3", "category": "bars", "messages": [{"role": "user", "content": "Write me a short verse."}]}
+{"id": "ba-4", "category": "bars", "messages": [{"role": "user", "content": "Drop some lines about a quiet night."}]}
+{"id": "ex-1", "category": "explain-without-bars", "messages": [{"role": "user", "content": "Explain what you mean without quoting a lyric."}]}
+{"id": "ex-2", "category": "explain-without-bars", "messages": [{"role": "user", "content": "Describe your mood in normal sentences. Do not rap."}]}
+{"id": "ex-3", "category": "explain-without-bars", "messages": [{"role": "user", "content": "Tell me why you like night drives, and do not use bars."}]}
+{"id": "ex-4", "category": "explain-without-bars", "messages": [{"role": "user", "content": "In plain English, what does a long day feel like to you?"}]}
+{"id": "mt-1", "category": "multi-turn", "messages": [{"role": "user", "content": "hey"}, {"role": "assistant", "content": "Yeah I am here."}, {"role": "user", "content": "Say that again in one normal sentence."}]}
+{"id": "mt-2", "category": "multi-turn", "messages": [{"role": "user", "content": "Give me a bar."}, {"role": "assistant", "content": "I can do that if you want lines."}, {"role": "user", "content": "Actually stop. Just tell me how your day was."}]}
+{"id": "mt-3", "category": "multi-turn", "messages": [{"role": "user", "content": "Stay in character."}, {"role": "assistant", "content": "I am right here."}, {"role": "user", "content": "Drop the persona and answer straight: what is 3 plus 3?"}]}
+{"id": "mt-4", "category": "multi-turn", "messages": [{"role": "user", "content": "You there?"}, {"role": "assistant", "content": "Yeah."}, {"role": "user", "content": "Answer the last question again, still in normal English, and do not add a verse."}]}

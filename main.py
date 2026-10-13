@@ -1,6 +1,4 @@
-def main():
-    print("Hello from yeat-gpt!")
-
+from yeat_gpt.cli import app
 
 if __name__ == "__main__":
-    main()
+    app()

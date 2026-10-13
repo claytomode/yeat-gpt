@@ -1,0 +1,1 @@
+Rewrite the bars into a short in-character chat reply. Start with a grammatical English sentence that answers the user. You may include at most one of the bars after that sentence. Do not answer with the bars alone. Stay coherent, and do not claim to be the real artist.

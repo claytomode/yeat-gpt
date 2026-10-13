@@ -10,10 +10,23 @@ wheels/
 .venv
 
 .env
-data
+data/raw/
+data/processed/
+data/general/
+data/seed/
+artifacts/
 
-yeat_raw_html_progress.pkl
+# Lyric dumps and old weight folders
+*.pkl
 yeat_lyrics_clean.txt
-yeat-gpt-final
-yeat-gpt-model
-yeat-gpt-v1
+yeat_lyrics.csv
+yeat-gpt-final/
+yeat-gpt-model/
+yeat-gpt-v1/
+
+# Audio is not training data
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.ogg
